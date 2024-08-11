@@ -16,7 +16,6 @@ run/main_scene="res://Scene/VisualScene/start_scene.tscn"
 config/features=PackedStringArray("4.1", "Forward Plus")
 run/max_fps=60
 config/icon="res://icon-LP.png"
-config/windows_native_icon="res://psc.ico"
 
 [autoload]
 

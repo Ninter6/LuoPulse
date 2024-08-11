@@ -40,7 +40,7 @@ var notes_path : String = GlobalScene.saved_msclist_path + \
 					 GlobalScene.selected_msc_title + "/" + \
 					 GlobalScene.selected_msc_title + ".txt"
 
-var file : FileAccess = FileAccess.open(notes_path, FileAccess.READ)
+var file : FileAccess # = FileAccess.open(notes_path, FileAccess.READ)
 
 var note : PackedStringArray = []
 
@@ -68,6 +68,10 @@ var single_note : PackedScene = load("res://Scene/WidgetScene/single_note.tscn")
 
 var instance : CharacterBody2D # = load("res://Scene/WidgetScene/single_note.tscn").instantiate()
 
+var index : int = 0
+
+var res : PackedStringArray
+
 
 func _ready():
 	
@@ -78,6 +82,8 @@ func _ready():
 	
 	if file == null or !file.is_open():
 		return
+	
+	res = file.get_as_text().split('\n') #########################################
 	
 	# finished 信号连接
 	finished.connect(display_finish_panel)
@@ -108,7 +114,8 @@ func _process(delta):
 	# 正在加载音符
 	if is_loading_note:
 		for i in range(100):
-			loader.load_note(self, file)
+			# loader.load_note(self, file)
+			loader.load_note_in_once(self, res)
 		
 	# 计算进度条进度
 	progressbar.value = int(loaded_note_num / total_note_num * 100)
@@ -198,7 +205,7 @@ func _on_view_button_button_down():
 func _on_start_aud_area_2d_body_entered(body : CharacterBody2D):
 	if body.name == "FIRST":
 		# 确保这部分代码只运行一次
-		disconnect("body_entered", _on_start_aud_area_2d_body_entered)
+		start_audio_area.disconnect("body_entered", _on_start_aud_area_2d_body_entered)
 		start_audio_area.queue_free()
 		start_audio()
 
@@ -206,5 +213,5 @@ func _on_start_aud_area_2d_body_entered(body : CharacterBody2D):
 # 结束 展示结算画面
 func display_finish_panel():
 	var panel : PackedScene = preload("res://Scene/WidgetScene/finished_panel.tscn")
-	var instance : Panel = panel.instantiate()
-	add_child(instance)
+	var panel_instance : Panel = panel.instantiate()
+	add_child(panel_instance)

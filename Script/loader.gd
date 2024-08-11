@@ -13,9 +13,12 @@ scene.loaded_note_num	已加载的音符数
 
 var first = null
 
+
+var data : String = ""
+
 # return 相当于 continue
 func load_note(scene : PlayScene, file : FileAccess) -> void:
-	var data : String = file.get_line()
+	data = file.get_line()
 	
 	# INFO: 这里把一堆if换成了match，代码看起来会更紧凑
 	match data:
@@ -82,3 +85,96 @@ func load_note(scene : PlayScene, file : FileAccess) -> void:
 	if first == null:
 		first = scene.instance
 		first.name = "FIRST"
+
+
+func load_note_in_once(scene : PlayScene, res_str : PackedStringArray) -> void:
+	
+	if data == "<EOF>" or scene.index == res_str.size() - 1:
+		scene.get_tree().paused = false
+		GlobalScene.is_running_note = true
+		scene.is_loading_note = false
+		scene.loading_panel.visible = false
+		return
+	
+	data = res_str[scene.index]
+	
+	if data == "":
+		scene.index += 1
+		# print("检测到空行")
+		return
+	
+	if data[0] == "-":
+		scene.index += 1
+		# print("检测到注释")
+		return
+	
+	if data[-1] == '\r':
+		data = data.trim_suffix('\r')
+	
+	match data:
+		"<bpm>":
+			scene.index += 1
+			data = res_str[scene.index]
+			GlobalScene.bpm = float(data)
+			print("bpm: ", GlobalScene.bpm)
+			scene.index += 1
+			return
+		"<bpp>":
+			scene.index += 1
+			data = res_str[scene.index]
+			GlobalScene.bpp = int(data)
+			print("bpp: ", GlobalScene.bpp)
+			scene.index += 1
+			return
+		"<dt>":
+			scene.index += 1
+			data = res_str[scene.index]
+			GlobalScene.dt = float(data)
+			print("dt: ", GlobalScene.dt)
+			scene.index += 1
+			return
+		"<del>":
+			scene.index += 1
+			data = res_str[scene.index]
+			GlobalScene.del = float(data)
+			print("del: ", GlobalScene.del)
+			scene.index += 1
+			return
+		"<tal>":
+			scene.index += 1
+			data = res_str[scene.index]
+			scene.total_note_num = int(data)
+			print("total: ", scene.total_note_num)
+			scene.index += 1
+			return
+		"<p>", "<P>":
+			scene.index += 1
+			data = res_str[scene.index]
+			GlobalScene.phara = int(data) - 1
+			# print("当前phara: ", GlobalScene.phara)
+			scene.index += 1
+			return
+
+	scene.note = data.split(":")
+	if not (scene.note[0] in "1234"):
+		# print("被截断的字符: ", scene.note[0])
+		scene.index += 1
+		return
+	
+	scene.instance = scene.single_note.instantiate()
+	scene.notes.add_child(scene.instance)
+	
+	# 已加载的音符数加 1
+	scene.loaded_note_num += 1
+	
+	# 计算音符坐标
+	scene.instance.position.x = 100 * float(scene.note[0]) - 250
+	scene.instance.position.y = GlobalScene.sec_to_length(float(scene.note[1]) + GlobalScene.bpp * GlobalScene.phara )
+	
+	scene.index += 1
+	
+	if first == null:
+		first = scene.instance
+		first.name = "FIRST"
+	
+	return
